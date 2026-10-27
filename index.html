@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestor de Turnos & Sistema de Pegatinas</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="app-container">
+    <header class="app-header">
+      <h1>🗓️ Gestor de Turnos & Pegatinas</h1>
+      <p>Reserva tu turno y suma pegatinas por cada servicio completado.</p>
+    </header>
+
+    <div class="grid-layout">
+      <!-- SECCIÓN 1: GESTOR DE TURNOS -->
+      <section class="card">
+        <h2>Sección 1: Agendar Turno</h2>
+        
+        <form id="appointmentForm">
+          <div class="form-group">
+            <label for="clientName">Nombre del Cliente:</label>
+            <input type="text" id="clientName" placeholder="Ej. Ana Pérez" required>
+          </div>
+
+          <div class="form-group">
+            <label for="serviceType">Servicio Requerido:</label>
+            <select id="serviceType" required>
+              <option value="1500">Corte de Cabello ($1.500 ARS)</option>
+              <option value="3000">Tinte y Peinado ($3.000 ARS)</option>
+              <option value="4500">Tratamiento Completo ($4.500 ARS)</option>
+              <option value="6000">Paquete VIP ($6.000 ARS)</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="appointmentDate">Fecha:</label>
+              <input type="date" id="appointmentDate" required>
+            </div>
+            <div class="form-group">
+              <label for="appointmentTime">Hora:</label>
+              <input type="time" id="appointmentTime" required>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary">Confirmar y Agendar Turno</button>
+        </form>
+
+        <div class="turn-summary" id="turnSummary">
+          <p class="placeholder-text">Completa el formulario para generar tu turno.</p>
+        </div>
+      </section>
+
+      <!-- SECCIÓN 2: SISTEMA DE PEGATINAS -->
+      <section class="card">
+        <h2>Sección 2: Recompensa de Pegatinas</h2>
+        <p class="rule-badge">Regla: 1 Pegatina cada $1.000 ARS pagados</p>
+
+        <div class="rewards-box">
+          <div class="reward-metric">
+            <span>Monto del Turno:</span>
+            <strong id="displayAmount">$0 ARS</strong>
+          </div>
+          <div class="reward-metric highlight">
+            <span>Pegatinas Obtenidas:</span>
+            <strong id="displayStickers">0 🌟</strong>
+          </div>
+        </div>
+
+        <h3>Tus Pegatinas del Turno:</h3>
+        <div id="stickerDisplay" class="sticker-grid">
+          <p class="placeholder-text">Agenda un turno para ver tus pegatinas coleccionables.</p>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
