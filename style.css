@@ -2,31 +2,32 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 body {
-  background-color: #f0f4f8;
+  background-color: #eef2f6;
   color: #1e293b;
   min-height: 100vh;
 }
 
 .app-header {
-  background-color: #0284c7;
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
   color: #ffffff;
-  padding: 1.25rem 2rem;
+  padding: 1.5rem 2rem;
   text-align: center;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.2);
 }
 
 .app-header h1 {
-  font-size: 1.5rem;
+  font-size: 1.6rem;
   font-weight: 700;
+  letter-spacing: -0.5px;
 }
 
 .main-grid {
-  max-width: 1200px;
-  margin: 2rem auto;
+  max-width: 1180px;
+  margin: 2.5rem auto;
   padding: 0 1.5rem;
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -36,16 +37,16 @@ body {
 
 .panel-card {
   background-color: #ffffff;
-  border-radius: 12px;
-  padding: 1.75rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  border-radius: 14px;
+  padding: 2rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
   border: 1px solid #e2e8f0;
 }
 
 .panel-card h2 {
-  font-size: 1.2rem;
+  font-size: 1.25rem;
   color: #0f172a;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
   padding-bottom: 0.75rem;
   border-bottom: 2px solid #0284c7;
 }
@@ -53,15 +54,16 @@ body {
 .config-box {
   background-color: #f8fafc;
   border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  padding: 1rem;
+  border-radius: 10px;
+  padding: 1.1rem;
   margin-bottom: 1.5rem;
 }
 
 .config-box h3 {
   font-size: 0.9rem;
-  color: #475569;
-  margin-bottom: 0.75rem;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 0.85rem;
 }
 
 .config-row {
@@ -76,7 +78,7 @@ body {
 }
 
 .form-group {
-  margin-bottom: 1rem;
+  margin-bottom: 1.1rem;
 }
 
 .form-row {
@@ -89,7 +91,7 @@ label {
   display: block;
   font-size: 0.85rem;
   font-weight: 600;
-  color: #334155;
+  color: #475569;
   margin-bottom: 0.4rem;
 }
 
@@ -98,19 +100,20 @@ input[type="date"],
 input[type="time"],
 select {
   width: 100%;
-  padding: 0.65rem 0.85rem;
+  padding: 0.7rem 0.9rem;
   border: 1px solid #cbd5e1;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 0.95rem;
   color: #0f172a;
   background-color: #ffffff;
-  transition: border-color 0.2s;
+  transition: all 0.2s ease;
 }
 
 input:focus,
 select:focus {
   outline: none;
   border-color: #0284c7;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
 }
 
 .btn-primary {
@@ -118,28 +121,33 @@ select:focus {
   background-color: #0284c7;
   color: #ffffff;
   border: none;
-  padding: 0.85rem;
+  padding: 0.9rem;
   border-radius: 8px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   margin-top: 0.5rem;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, transform 0.1s;
 }
 
 .btn-primary:hover {
   background-color: #0369a1;
 }
 
+.btn-primary:active {
+  transform: scale(0.99);
+}
+
 .btn-secondary {
   background-color: #475569;
   color: #ffffff;
   border: none;
-  padding: 0.65rem 1rem;
-  border-radius: 6px;
+  padding: 0.7rem 1.1rem;
+  border-radius: 8px;
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
+  transition: background-color 0.2s;
 }
 
 .btn-secondary:hover {
@@ -147,23 +155,23 @@ select:focus {
 }
 
 .alerta {
-  padding: 0.75rem;
-  border-radius: 6px;
+  padding: 0.85rem;
+  border-radius: 8px;
   font-size: 0.85rem;
   font-weight: 600;
   margin-bottom: 1rem;
 }
 
 .alerta.error {
-  background-color: #fee2e2;
-  color: #b91c1c;
-  border: 1px solid #f87171;
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
 }
 
 .alerta.exito {
-  background-color: #dcfce7;
-  color: #15803d;
-  border: 1px solid #4ade80;
+  background-color: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
 }
 
 .oculto {
@@ -174,7 +182,7 @@ select:focus {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
   padding-bottom: 0.75rem;
   border-bottom: 2px solid #0284c7;
 }
@@ -188,65 +196,71 @@ select:focus {
 .badge {
   background-color: #e0f2fe;
   color: #0369a1;
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
+  padding: 0.3rem 0.85rem;
+  border-radius: 999px;
   font-size: 0.8rem;
   font-weight: 700;
 }
 
 .filtro-box {
-  margin-bottom: 1rem;
+  margin-bottom: 1.2rem;
 }
 
 .lista-turnos {
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
-  max-height: 520px;
+  gap: 0.9rem;
+  max-height: 540px;
   overflow-y: auto;
+  padding-right: 4px;
 }
 
 .turno-item {
   background-color: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-left: 4px solid #0284c7;
-  border-radius: 8px;
-  padding: 1rem;
+  border-left: 5px solid #0284c7;
+  border-radius: 10px;
+  padding: 1rem 1.2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.turno-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
 .turno-datos h4 {
-  font-size: 1rem;
+  font-size: 1.05rem;
   color: #0f172a;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.3rem;
 }
 
 .turno-datos p {
   font-size: 0.85rem;
   color: #475569;
-  margin-bottom: 0.2rem;
+  margin-bottom: 0.4rem;
 }
 
 .turno-fecha-hora {
   display: inline-block;
   background-color: #e0f2fe;
   color: #0369a1;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.8rem;
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
-  margin-top: 0.3rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
 }
 
 .btn-eliminar {
   background-color: #ef4444;
   color: #ffffff;
   border: none;
-  padding: 0.5rem 0.85rem;
-  border-radius: 6px;
+  padding: 0.55rem 0.95rem;
+  border-radius: 8px;
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
@@ -260,8 +274,11 @@ select:focus {
 .vacio-msg {
   text-align: center;
   color: #94a3b8;
-  padding: 2rem 0;
+  padding: 3rem 1rem;
   font-size: 0.95rem;
+  background-color: #f8fafc;
+  border-radius: 8px;
+  border: 1px dashed #cbd5e1;
 }
 
 @media (max-width: 850px) {
