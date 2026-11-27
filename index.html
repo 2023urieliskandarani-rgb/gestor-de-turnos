@@ -3,80 +3,97 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gestor de Turnos & Sistema de Pegatinas</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Gestor de Turnos Hospitalarios</title>
+  <link rel="stylesheet" href="styles.css">
+  <!-- Google Fonts & FontAwesome -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
-  <div class="app-container">
-    <header class="app-header">
-      <h1>🗓️ Gestor de Turnos & Pegatinas</h1>
-      <p>Reserva tu turno y suma pegatinas por cada servicio completado.</p>
-    </header>
-
-    <div class="grid-layout">
-      <!-- SECCIÓN 1: GESTOR DE TURNOS -->
-      <section class="card">
-        <h2>Sección 1: Agendar Turno</h2>
-        
-        <form id="appointmentForm">
-          <div class="form-group">
-            <label for="clientName">Nombre del Cliente:</label>
-            <input type="text" id="clientName" placeholder="Ej. Ana Pérez" required>
-          </div>
-
-          <div class="form-group">
-            <label for="serviceType">Servicio Requerido:</label>
-            <select id="serviceType" required>
-              <option value="1500">Corte de Cabello ($1.500 ARS)</option>
-              <option value="3000">Tinte y Peinado ($3.000 ARS)</option>
-              <option value="4500">Tratamiento Completo ($4.500 ARS)</option>
-              <option value="6000">Paquete VIP ($6.000 ARS)</option>
-            </select>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="appointmentDate">Fecha:</label>
-              <input type="date" id="appointmentDate" required>
-            </div>
-            <div class="form-group">
-              <label for="appointmentTime">Hora:</label>
-              <input type="time" id="appointmentTime" required>
-            </div>
-          </div>
-
-          <button type="submit" class="btn-primary">Confirmar y Agendar Turno</button>
-        </form>
-
-        <div class="turn-summary" id="turnSummary">
-          <p class="placeholder-text">Completa el formulario para generar tu turno.</p>
-        </div>
-      </section>
-
-      <!-- SECCIÓN 2: SISTEMA DE PEGATINAS -->
-      <section class="card">
-        <h2>Sección 2: Recompensa de Pegatinas</h2>
-        <p class="rule-badge">Regla: 1 Pegatina cada $1.000 ARS pagados</p>
-
-        <div class="rewards-box">
-          <div class="reward-metric">
-            <span>Monto del Turno:</span>
-            <strong id="displayAmount">$0 ARS</strong>
-          </div>
-          <div class="reward-metric highlight">
-            <span>Pegatinas Obtenidas:</span>
-            <strong id="displayStickers">0 🌟</strong>
-          </div>
-        </div>
-
-        <h3>Tus Pegatinas del Turno:</h3>
-        <div id="stickerDisplay" class="sticker-grid">
-          <p class="placeholder-text">Agenda un turno para ver tus pegatinas coleccionables.</p>
-        </div>
-      </section>
+  <header class="app-header">
+    <div class="logo">
+      <i class="fa-solid fa-hospital-user"></i>
+      <h1>Gestor de Turnos Hospitalarios</h1>
     </div>
-  </div>
+  </header>
+
+  <main class="container">
+    
+    <!-- SECCIÓN IZQUIERDA: REGISTRO DE TURNO -->
+    <section class="form-section">
+      <h2><i class="fa-solid fa-calendar-plus"></i> Agendar Nuevo Turno</h2>
+      
+      <form id="appointmentForm">
+        <!-- Paciente -->
+        <div class="form-group">
+          <label for="patientName">Nombre Completo del Paciente</label>
+          <input type="text" id="patientName" placeholder="Ej. Ana García" required>
+        </div>
+
+        <!-- Especialidad -->
+        <div class="form-group">
+          <label for="specialty">Especialidad Médica</label>
+          <select id="specialty" required>
+            <option value="">Seleccione especialidad...</option>
+            <option value="Cardiología">Cardiología</option>
+            <option value="Pediatría">Pediatría</option>
+            <option value="Traumatología">Traumatología</option>
+            <option value="Dermatología">Dermatología</option>
+            <option value="Neurología">Neurología</option>
+            <option value="Medicina General">Medicina General</option>
+          </select>
+        </div>
+
+        <!-- Fecha -->
+        <div class="form-group">
+          <label for="date">Fecha del Turno</label>
+          <input type="date" id="date" required>
+        </div>
+
+        <!-- Horario -->
+        <div class="form-group">
+          <label for="time">Horario Asignado (cada 30 min)</label>
+          <select id="time" required>
+            <option value="">Seleccione horario...</option>
+            <!-- Opciones de 30 min pobladas dinámicamente -->
+          </select>
+        </div>
+
+        <!-- Botón de Guardado -->
+        <button type="submit" class="btn-submit">
+          <i class="fa-solid fa-floppy-disk"></i> Guardar Turno Asignado
+        </button>
+      </form>
+
+      <!-- Mensaje de Alerta -->
+      <div id="alertBox" class="alert hidden"></div>
+    </section>
+
+    <!-- SECCIÓN DERECHA: LISTADO DE TURNOS -->
+    <section class="panel-section">
+      <div class="panel-header">
+        <h2><i class="fa-solid fa-list-check"></i> Turnos Registrados</h2>
+        <span class="badge-count" id="totalCount">0 turnos</span>
+      </div>
+
+      <!-- Filtro rápido -->
+      <div class="filter-box">
+        <input type="text" id="searchInput" placeholder="Buscar por nombre de paciente...">
+      </div>
+
+      <!-- Lista de Turnos -->
+      <div class="appointments-list" id="appointmentsList">
+        <div class="empty-state">
+          <i class="fa-regular fa-calendar-xmark"></i>
+          <p>No hay turnos agendados aún.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
 
   <script src="script.js"></script>
 </body>
