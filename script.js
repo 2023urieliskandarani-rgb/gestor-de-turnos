@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   appointments = loadAppointments();
   renderAppointmentsList();
-  updateRewardsUI(0, 0);
+  updateRewardsUI(0, 0, 0);
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -65,7 +65,6 @@ function suggestNextAvailableTime(fecha, horaSolicitada) {
       .map((t) => normalizeTime(t.hora))
   );
 
-  // Busca hacia adelante de a 60 minutos (ej. 17:08 -> 18:08) y luego de a 15 minutos
   for (let i = 1; i <= 12; i++) {
     const candidateMin = (totalMinutes + i * 60) % (24 * 60);
     const hh = String(Math.floor(candidateMin / 60)).padStart(2, '0');
@@ -87,6 +86,17 @@ function suggestNextAvailableTime(fecha, horaSolicitada) {
   }
 
   return null;
+}
+
+// Calcula pegatinas base por monto + bono progresivo según cuántas personas hay anotadas
+function calcularPegatinas(monto, cantidadPersonasConEsteTurno) {
+  const pegatinasBase = Math.floor(monto / TASA_PEGATINA);
+  const bonoPorPersonas = Math.floor(cantidadPersonasConEsteTurno / 2);
+  return {
+    base: pegatinasBase,
+    bono: bonoPorPersonas,
+    total: pegatinasBase + bonoPorPersonas
+  };
 }
 
 function procesarTurno() {
@@ -116,7 +126,9 @@ function procesarTurno() {
     return;
   }
 
-  const pegatinasGanadas = calcularPegatinas(precioServicio);
+  const posicionPersona = appointments.length + 1;
+  const { base, bono, total: pegatinasGanadas } = calcularPegatinas(precioServicio, posicionPersona);
+
   const nuevoTurno = {
     id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
     cliente,
@@ -124,6 +136,8 @@ function procesarTurno() {
     precio: precioServicio,
     fecha,
     hora,
+    pegatinasBase: base,
+    bonoPersonas: bono,
     pegatinas: pegatinasGanadas
   };
 
@@ -131,13 +145,14 @@ function procesarTurno() {
   appointments.sort((a, b) => `${a.fecha} ${a.hora}`.localeCompare(`${b.fecha} ${b.hora}`));
   saveAppointments();
 
+  const detalleBono = bono > 0 ? ` (${base} base + ${bono} bono por ${posicionPersona} personas anotadas)` : '';
   showStatusMessage(
-    `Turno confirmado para ${cliente} (${nombreServicio}) el ${fecha} a las ${hora} hs. Ganaste ${pegatinasGanadas} pegatina(s).`,
+    `Turno confirmado para ${cliente} (${nombreServicio}) el ${fecha} a las ${hora} hs. Ganaste ${pegatinasGanadas} pegatina(s)${detalleBono}.`,
     'success'
   );
 
   renderAppointmentsList();
-  updateRewardsUI(precioServicio, pegatinasGanadas);
+  updateRewardsUI(precioServicio, pegatinasGanadas, bono);
   document.getElementById('clientName').value = '';
 }
 
@@ -159,13 +174,13 @@ function renderAppointmentsList() {
     return;
   }
 
-  appointments.forEach((turno) => {
+  appointments.forEach((turno, index) => {
     const li = document.createElement('li');
     li.className = 'appointment-item';
 
     const infoDiv = document.createElement('div');
     const title = document.createElement('strong');
-    title.textContent = `${turno.cliente} — ${turno.servicio}`;
+    title.textContent = `#${index + 1} ${turno.cliente} — ${turno.servicio}`;
 
     const meta = document.createElement('div');
     meta.className = 'appointment-meta';
@@ -184,15 +199,15 @@ function renderAppointmentsList() {
   });
 }
 
-function calcularPegatinas(monto) {
-  return Math.floor(monto / TASA_PEGATINA);
-}
-
-function updateRewardsUI(ultimoMonto, ultimasPegatinas) {
+function updateRewardsUI(ultimoMonto, ultimasPegatinas, ultimoBono) {
   const totalPegatinas = appointments.reduce((acc, item) => acc + item.pegatinas, 0);
+  const totalPersonas = appointments.length;
 
   document.getElementById('displayAmount').textContent = `$${ultimoMonto.toLocaleString('es-AR')} ARS`;
-  document.getElementById('displayStickers').textContent = `${ultimasPegatinas} 🌟 (Total: ${totalPegatinas})`;
+
+  const bonoTexto = ultimoBono > 0 ? ` · +${ultimoBono} bono (${totalPersonas} anotados)` : '';
+  document.getElementById('displayStickers').textContent =
+    `${ultimasPegatinas} 🌟${bonoTexto} (Total: ${totalPegatinas})`;
 
   renderizarPegatinas(totalPegatinas);
 }
