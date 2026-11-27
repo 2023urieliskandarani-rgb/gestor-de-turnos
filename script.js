@@ -1,10 +1,21 @@
-// Esperar a que cargue el DOM
+const STORAGE_KEY = 'gestor_turnos_pegatinas_v1';
+const LISTA_EMOJIS = ['🌟', '✂️', '💈', '⭐', '✨', '💅'];
+const TASA_PEGATINA = 1000;
+
+let appointments = [];
+
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('appointmentForm');
+  const dateInput = document.getElementById('appointmentDate');
+  const timeInput = document.getElementById('appointmentTime');
 
-  // Establecer fecha de hoy por defecto en el input date
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('appointmentDate').value = today;
+  const today = getTodayString();
+  dateInput.value = today;
+  timeInput.value = '17:08';
+
+  appointments = loadAppointments();
+  renderAppointmentsList();
+  updateRewardsUI(0, 0);
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -12,59 +23,194 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-// Función principal que coordina ambas secciones
+function getTodayString() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function loadAppointments() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveAppointments() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(appointments));
+}
+
+function normalizeTime(hora) {
+  return hora ? hora.trim() : '';
+}
+
+function findConflict(fecha, hora) {
+  const targetHora = normalizeTime(hora);
+  return appointments.find((turno) => turno.fecha === fecha && normalizeTime(turno.hora) === targetHora);
+}
+
+function suggestNextAvailableTime(fecha, horaSolicitada) {
+  const match = /^(\d{2}):(\d{2})$/.exec(horaSolicitada);
+  if (!match) return null;
+
+  let totalMinutes = parseInt(match[1], 10) * 60 + parseInt(match[2], 10);
+  const occupied = new Set(
+    appointments
+      .filter((t) => t.fecha === fecha)
+      .map((t) => normalizeTime(t.hora))
+  );
+
+  // Busca hacia adelante de a 60 minutos (ej. 17:08 -> 18:08) y luego de a 15 minutos
+  for (let i = 1; i <= 12; i++) {
+    const candidateMin = (totalMinutes + i * 60) % (24 * 60);
+    const hh = String(Math.floor(candidateMin / 60)).padStart(2, '0');
+    const mm = String(candidateMin % 60).padStart(2, '0');
+    const candidate = `${hh}:${mm}`;
+    if (!occupied.has(candidate)) {
+      return candidate;
+    }
+  }
+
+  for (let step = 15; step < 24 * 60; step += 15) {
+    const candidateMin = (totalMinutes + step) % (24 * 60);
+    const hh = String(Math.floor(candidateMin / 60)).padStart(2, '0');
+    const mm = String(candidateMin % 60).padStart(2, '0');
+    const candidate = `${hh}:${mm}`;
+    if (!occupied.has(candidate)) {
+      return candidate;
+    }
+  }
+
+  return null;
+}
+
 function procesarTurno() {
-  // 1. Recolectar datos del formulario (Sección 1)
-  const cliente = document.getElementById('clientName').value;
+  const cliente = document.getElementById('clientName').value.trim();
   const selectServicio = document.getElementById('serviceType');
   const precioServicio = parseFloat(selectServicio.value);
   const nombreServicio = selectServicio.options[selectServicio.selectedIndex].text.split(' (')[0];
   const fecha = document.getElementById('appointmentDate').value;
-  const hora = document.getElementById('appointmentTime').value;
+  const hora = normalizeTime(document.getElementById('appointmentTime').value);
 
-  // 2. Renderizar resumen del turno
-  mostrarResumenTurno(cliente, nombreServicio, fecha, hora);
+  if (!cliente || !fecha || !hora) {
+    showStatusMessage('Completá el nombre, la fecha y la hora del turno.', 'error');
+    return;
+  }
 
-  // 3. Pasar respuesta de la Sección 1 a la Sección 2 (Calcular pegatinas)
+  const conflicto = findConflict(fecha, hora);
+  if (conflicto) {
+    const sugerencia = suggestNextAvailableTime(fecha, hora);
+    const extraSugerencia = sugerencia
+      ? ` Probá por ejemplo a las ${sugerencia} hs o elegí otro día.`
+      : ' Elegí otro horario o día.';
+
+    showStatusMessage(
+      `Horario no disponible: ${conflicto.cliente} ya tiene turno el ${fecha} a las ${hora} hs.${extraSugerencia}`,
+      'error'
+    );
+    return;
+  }
+
   const pegatinasGanadas = calcularPegatinas(precioServicio);
+  const nuevoTurno = {
+    id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+    cliente,
+    servicio: nombreServicio,
+    precio: precioServicio,
+    fecha,
+    hora,
+    pegatinas: pegatinasGanadas
+  };
 
-  // 4. Actualizar la interfaz del sistema de pegatinas
-  actualizarMetricasRecompensa(precioServicio, pegatinasGanadas);
-  renderizarPegatinas(pegatinasGanadas);
+  appointments.push(nuevoTurno);
+  appointments.sort((a, b) => `${a.fecha} ${a.hora}`.localeCompare(`${b.fecha} ${b.hora}`));
+  saveAppointments();
+
+  showStatusMessage(
+    `Turno confirmado para ${cliente} (${nombreServicio}) el ${fecha} a las ${hora} hs. Ganaste ${pegatinasGanadas} pegatina(s).`,
+    'success'
+  );
+
+  renderAppointmentsList();
+  updateRewardsUI(precioServicio, pegatinasGanadas);
+  document.getElementById('clientName').value = '';
 }
 
-// Subfunción Sección 1: Mostrar confirmación del turno
-function mostrarResumenTurno(cliente, servicio, fecha, hora) {
+function showStatusMessage(text, type) {
   const container = document.getElementById('turnSummary');
-  container.innerHTML = `
-    <strong> Turno Confirmado:</strong><br>
-    • <strong>Cliente:</strong> ${cliente}<br>
-    • <strong>Servicio:</strong> ${servicio}<br>
-    • <strong>Fecha y Hora:</strong> ${fecha} a las ${hora} hs
-  `;
+  container.className = `status-message ${type}`;
+  container.textContent = text;
 }
 
-// Subfunción Sección 2: Cálculo de conversión (1 pegatina cada $1.000 ARS)
+function renderAppointmentsList() {
+  const list = document.getElementById('appointmentsList');
+  list.innerHTML = '';
+
+  if (appointments.length === 0) {
+    const empty = document.createElement('p');
+    empty.className = 'placeholder-text';
+    empty.textContent = 'Todavía no hay turnos agendados.';
+    list.appendChild(empty);
+    return;
+  }
+
+  appointments.forEach((turno) => {
+    const li = document.createElement('li');
+    li.className = 'appointment-item';
+
+    const infoDiv = document.createElement('div');
+    const title = document.createElement('strong');
+    title.textContent = `${turno.cliente} — ${turno.servicio}`;
+
+    const meta = document.createElement('div');
+    meta.className = 'appointment-meta';
+    meta.textContent = `📅 ${turno.fecha} · 🕒 ${turno.hora} hs · $${turno.precio.toLocaleString('es-AR')} ARS`;
+
+    infoDiv.appendChild(title);
+    infoDiv.appendChild(meta);
+
+    const badge = document.createElement('span');
+    badge.className = 'appointment-badge';
+    badge.textContent = `+${turno.pegatinas} 🌟`;
+
+    li.appendChild(infoDiv);
+    li.appendChild(badge);
+    list.appendChild(li);
+  });
+}
+
 function calcularPegatinas(monto) {
-  const tasaPegatina = 1000;
-  return Math.floor(monto / tasaPegatina);
+  return Math.floor(monto / TASA_PEGATINA);
 }
 
-// Subfunción Sección 2: Mostrar montos y total de pegatinas
-function actualizarMetricasRecompensa(monto, pegatinas) {
-  document.getElementById('displayAmount').textContent = `$${monto.toLocaleString('es-AR')} ARS`;
-  document.getElementById('displayStickers').textContent = `${pegatinas} 🌟`;
+function updateRewardsUI(ultimoMonto, ultimasPegatinas) {
+  const totalPegatinas = appointments.reduce((acc, item) => acc + item.pegatinas, 0);
+
+  document.getElementById('displayAmount').textContent = `$${ultimoMonto.toLocaleString('es-AR')} ARS`;
+  document.getElementById('displayStickers').textContent = `${ultimasPegatinas} 🌟 (Total: ${totalPegatinas})`;
+
+  renderizarPegatinas(totalPegatinas);
 }
 
-// Subfunción Sección 2: Renderizar pegatinas visuales con variedades
-function renderizarPegatinas(cantidad) {
+function renderizarPegatinas(cantidadTotal) {
   const container = document.getElementById('stickerDisplay');
   container.innerHTML = '';
 
-  const listaEmojis = ['🌟', '✂️', '💈', '⭐', '✨', '💅', '💈'];
+  if (cantidadTotal <= 0) {
+    const placeholder = document.createElement('p');
+    placeholder.className = 'placeholder-text';
+    placeholder.textContent = 'Agenda un turno para ver tus pegatinas coleccionables.';
+    container.appendChild(placeholder);
+    return;
+  }
 
-  for (let i = 0; i < cantidad; i++) {
-    const emoji = listaEmojis[i % listaEmojis.length];
+  for (let i = 0; i < cantidadTotal; i++) {
+    const emoji = LISTA_EMOJIS[i % LISTA_EMOJIS.length];
     const span = document.createElement('span');
     span.className = 'sticker-item';
     span.textContent = emoji;
