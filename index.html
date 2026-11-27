@@ -4,97 +4,97 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gestor de Turnos Hospitalarios</title>
+  <!-- Este enlace busca el archivo styles.css en la misma carpeta -->
   <link rel="stylesheet" href="styles.css">
-  <!-- Google Fonts & FontAwesome -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
   <header class="app-header">
-    <div class="logo">
-      <i class="fa-solid fa-hospital-user"></i>
-      <h1>Gestor de Turnos Hospitalarios</h1>
-    </div>
+    <h1>Sistema de Gestión de Turnos Hospitalarios</h1>
   </header>
 
-  <main class="container">
+  <main class="main-grid">
     
-    <!-- SECCIÓN IZQUIERDA: REGISTRO DE TURNO -->
-    <section class="form-section">
-      <h2><i class="fa-solid fa-calendar-plus"></i> Agendar Nuevo Turno</h2>
-      
-      <form id="appointmentForm">
-        <!-- Paciente -->
+    <!-- SECCIÓN IZQUIERDA: REGISTRO Y CONFIGURACIÓN -->
+    <section class="panel-card">
+      <h2>1. Configuración y Nuevo Turno</h2>
+
+      <div class="config-box">
+        <h3>Horarios de Atención del Consultor</h3>
+        <div class="config-row">
+          <div class="form-group">
+            <label for="horaInicio">Apertura:</label>
+            <input type="time" id="horaInicio" value="08:00">
+          </div>
+          <div class="form-group">
+            <label for="horaFin">Cierre:</label>
+            <input type="time" id="horaFin" value="18:00">
+          </div>
+          <button type="button" id="btnActualizarHorarios" class="btn-secondary">Aplicar</button>
+        </div>
+      </div>
+
+      <form id="turnoForm" class="turno-form">
         <div class="form-group">
-          <label for="patientName">Nombre Completo del Paciente</label>
-          <input type="text" id="patientName" placeholder="Ej. Ana García" required>
+          <label for="paciente">Nombre y Apellido del Paciente:</label>
+          <input type="text" id="paciente" placeholder="Ej: Ana García" required>
         </div>
 
-        <!-- Especialidad -->
         <div class="form-group">
-          <label for="specialty">Especialidad Médica</label>
-          <select id="specialty" required>
-            <option value="">Seleccione especialidad...</option>
+          <label for="dni">DNI / Documento:</label>
+          <input type="text" id="dni" placeholder="Ej: 40.123.456" required>
+        </div>
+
+        <div class="form-group">
+          <label for="especialidad">Especialidad Médica:</label>
+          <select id="especialidad" required>
+            <option value="" disabled selected>Seleccione especialidad...</option>
+            <option value="Clínica Médica">Clínica Médica</option>
             <option value="Cardiología">Cardiología</option>
             <option value="Pediatría">Pediatría</option>
             <option value="Traumatología">Traumatología</option>
             <option value="Dermatología">Dermatología</option>
-            <option value="Neurología">Neurología</option>
-            <option value="Medicina General">Medicina General</option>
           </select>
         </div>
 
-        <!-- Fecha -->
-        <div class="form-group">
-          <label for="date">Fecha del Turno</label>
-          <input type="date" id="date" required>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="fecha">Fecha del Turno:</label>
+            <input type="date" id="fecha" required>
+          </div>
+
+          <div class="form-group">
+            <label for="horario">Horario (cada 30 min):</label>
+            <select id="horario" required></select>
+          </div>
         </div>
 
-        <!-- Horario -->
-        <div class="form-group">
-          <label for="time">Horario Asignado (cada 30 min)</label>
-          <select id="time" required>
-            <option value="">Seleccione horario...</option>
-            <!-- Opciones de 30 min pobladas dinámicamente -->
-          </select>
-        </div>
+        <div id="mensajeAlerta" class="alerta oculto"></div>
 
-        <!-- Botón de Guardado -->
-        <button type="submit" class="btn-submit">
-          <i class="fa-solid fa-floppy-disk"></i> Guardar Turno Asignado
-        </button>
+        <button type="submit" class="btn-primary">Guardar Turno Asignado</button>
       </form>
-
-      <!-- Mensaje de Alerta -->
-      <div id="alertBox" class="alert hidden"></div>
     </section>
 
-    <!-- SECCIÓN DERECHA: LISTADO DE TURNOS -->
-    <section class="panel-section">
+    <!-- SECCIÓN DERECHA: PANEL DE TURNOS REGISTRADOS -->
+    <section class="panel-card">
       <div class="panel-header">
-        <h2><i class="fa-solid fa-list-check"></i> Turnos Registrados</h2>
-        <span class="badge-count" id="totalCount">0 turnos</span>
+        <h2>2. Turnos Registrados</h2>
+        <span id="contadorTurnos" class="badge">0 turnos</span>
       </div>
 
-      <!-- Filtro rápido -->
-      <div class="filter-box">
-        <input type="text" id="searchInput" placeholder="Buscar por nombre de paciente...">
+      <div class="filtro-box">
+        <input type="text" id="buscarTurno" placeholder="Buscar por nombre de paciente, DNI o especialidad...">
       </div>
 
-      <!-- Lista de Turnos -->
-      <div class="appointments-list" id="appointmentsList">
-        <div class="empty-state">
-          <i class="fa-regular fa-calendar-xmark"></i>
-          <p>No hay turnos agendados aún.</p>
-        </div>
-      </div>
+      <div id="listaTurnos" class="lista-turnos"></div>
     </section>
 
   </main>
 
+  <!-- Este enlace busca el archivo script.js en la misma carpeta -->
   <script src="script.js"></script>
 </body>
 </html>
