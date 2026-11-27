@@ -1,173 +1,168 @@
-// Almacenamiento local de turnos
-let appointments = JSON.parse(localStorage.getItem('hospital_appointments')) || [];
-
-// Elementos DOM
-const form = document.getElementById('appointmentForm');
-const patientNameInput = document.getElementById('patientName');
-const specialtySelect = document.getElementById('specialty');
-const dateInput = document.getElementById('date');
-const timeSelect = document.getElementById('time');
-const appointmentsList = document.getElementById('appointmentsList');
-const totalCountBadge = document.getElementById('totalCount');
-const alertBox = document.getElementById('alertBox');
-const searchInput = document.getElementById('searchInput');
-
-// INICIALIZACIÓN
 document.addEventListener('DOMContentLoaded', () => {
-  setupMinDate();
-  generateTimeSlots();
-  renderAppointments();
+  const turnoForm = document.getElementById('turnoForm');
+  const fechaInput = document.getElementById('fecha');
+  const horarioSelect = document.getElementById('horario');
+  const horaInicioInput = document.getElementById('horaInicio');
+  const horaFinInput = document.getElementById('horaFin');
+  const btnActualizarHorarios = document.getElementById('btnActualizarHorarios');
+  const listaTurnos = document.getElementById('listaTurnos');
+  const contadorTurnos = document.getElementById('contadorTurnos');
+  const buscarTurnoInput = document.getElementById('buscarTurno');
+  const mensajeAlerta = document.getElementById('mensajeAlerta');
 
-  form.addEventListener('submit', handleAddAppointment);
-  searchInput.addEventListener('input', renderAppointments);
-});
+  let turnos = JSON.parse(localStorage.getItem('turnosHospital')) || [];
 
-// Configurar calendario para limitar desde el día de hoy en adelante
-function setupMinDate() {
-  const today = new Date().toISOString().split('T')[0];
-  dateInput.setAttribute('min', today);
-  dateInput.value = today; // Asigna hoy por defecto
-}
-
-// Generar horarios cada 30 minutos (Ejemplo: de 08:00 a 18:00)
-function generateTimeSlots() {
-  const startHour = 8;
-  const endHour = 18;
-  timeSelect.innerHTML = '<option value="">Seleccione horario...</option>';
-
-  for (let hour = startHour; hour < endHour; hour++) {
-    for (let min of [0, 30]) {
-      const hStr = hour.toString().padStart(2, '0');
-      const mStr = min.toString().padStart(2, '0');
-      const timeSlot = `${hStr}:${mStr}`;
-
-      const option = document.createElement('option');
-      option.value = timeSlot;
-      option.textContent = `${timeSlot} hs`;
-      timeSelect.appendChild(option);
+  function establecerFechaMinima() {
+    const hoy = new Date();
+    const anio = hoy.getFullYear();
+    const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+    const dia = String(hoy.getDate()).padStart(2, '0');
+    const fechaMin = `${anio}-${mes}-${dia}`;
+    fechaInput.min = fechaMin;
+    if (!fechaInput.value) {
+      fechaInput.value = fechaMin;
     }
   }
-}
 
-// Validación y Registro del Turno
-function handleAddAppointment(e) {
-  e.preventDefault();
+  function generarIntervalosHorarios() {
+    horarioSelect.innerHTML = '';
+    const inicioStr = horaInicioInput.value;
+    const finStr = horaFinInput.value;
 
-  const name = patientNameInput.value.trim();
-  const specialty = specialtySelect.value;
-  const date = dateInput.value;
-  const time = timeSelect.value;
+    if (!inicioStr || !finStr) return;
 
-  if (!name || !specialty || !date || !time) {
-    showAlert('Por favor complete todos los campos.', 'error');
-    return;
+    const [hIni, mIni] = inicioStr.split(':').map(Number);
+    const [hFin, mFin] = finStr.split(':').map(Number);
+
+    let minutosActuales = hIni * 60 + mIni;
+    const minutosLimite = hFin * 60 + mFin;
+
+    if (minutosActuales >= minutosLimite) {
+      mostrarAlerta('La hora de apertura debe ser anterior a la de cierre.', 'error');
+      return;
+    }
+
+    while (minutosActuales < minutosLimite) {
+      const hh = String(Math.floor(minutosActuales / 60)).padStart(2, '0');
+      const mm = String(minutosActuales % 60).padStart(2, '0');
+      const horaFormateada = `${hh}:${mm}`;
+
+      const option = document.createElement('option');
+      option.value = horaFormateada;
+      option.textContent = horaFormateada;
+      horarioSelect.appendChild(option);
+
+      minutosActuales += 30;
+    }
   }
 
-  // VALIDACIÓN OBLIGATORIA: Verificar si ya existe turno en la MISMA FECHA y MISMO HORARIO
-  const isConflict = appointments.some(app => app.date === date && app.time === time);
-
-  if (isConflict) {
-    showAlert(`El horario ${time} hs ya está ocupado para la fecha ${date}. Seleccione otro horario o fecha.`, 'error');
-    return;
+  function mostrarAlerta(texto, tipo) {
+    mensajeAlerta.textContent = texto;
+    mensajeAlerta.className = `alerta ${tipo}`;
+    setTimeout(() => {
+      mensajeAlerta.classList.add('oculto');
+    }, 3500);
   }
 
-  // Crear Objeto Turno
-  const newAppointment = {
-    id: Date.now().toString(),
-    name,
-    specialty,
-    date,
-    time
-  };
+  turnoForm.addEventListener('submit', (e) => {
+    e.preventDefault();
 
-  // Guardar y Actualizar
-  appointments.push(newAppointment);
-  saveToLocalStorage();
-  renderAppointments();
-  
-  showAlert('¡Turno registrado exitosamente!', 'success');
-  
-  // Limpiar campos de texto pero mantener fecha
-  patientNameInput.value = '';
-  specialtySelect.value = '';
-  timeSelect.value = '';
-}
+    const paciente = document.getElementById('paciente').value.trim();
+    const dni = document.getElementById('dni').value.trim();
+    const especialidad = document.getElementById('especialidad').value;
+    const fecha = fechaInput.value;
+    const horario = horarioSelect.value;
 
-// Renderizar la Lista de Turnos Agendados
-function renderAppointments() {
-  const filterTerm = searchInput.value.toLowerCase().trim();
-  
-  // Filtrado de búsqueda opcional por nombre
-  const filtered = appointments.filter(app => app.name.toLowerCase().includes(filterTerm));
+    const horarioOcupado = turnos.some(
+      (t) => t.fecha === fecha && t.horario === horario
+    );
 
-  // Ordenar por fecha y hora
-  filtered.sort((a, b) => new Date(`${a.date}T${a.time}`) - new Date(`${b.date}T${b.time}`));
+    if (horarioOcupado) {
+      mostrarAlerta(
+        `El horario ${horario} del día ${fecha} ya está ocupado. Elegí otro horario o fecha.`,
+        'error'
+      );
+      return;
+    }
 
-  totalCountBadge.textContent = `${appointments.length} ${appointments.length === 1 ? 'turno' : 'turnos'}`;
+    const nuevoTurno = {
+      id: Date.now(),
+      paciente,
+      dni,
+      especialidad,
+      fecha,
+      horario
+    };
 
-  if (filtered.length === 0) {
-    appointmentsList.innerHTML = `
-      <div class="empty-state">
-        <i class="fa-regular fa-calendar-xmark"></i>
-        <p>${filterTerm ? 'No se encontraron turnos con ese nombre.' : 'No hay turnos agendados aún.'}</p>
-      </div>
-    `;
-    return;
-  }
+    turnos.push(nuevoTurno);
+    guardarYRenderizar();
+    mostrarAlerta('Turno asignado correctamente.', 'exito');
 
-  appointmentsList.innerHTML = filtered.map(app => `
-    <div class="appointment-card">
-      <div class="patient-info">
-        <h3><i class="fa-solid fa-user-large"></i> ${escapeHtml(app.name)}</h3>
-        <div class="patient-meta">
-          <span><i class="fa-solid fa-stethoscope"></i> ${app.specialty}</span>
-          <span><i class="fa-regular fa-calendar"></i> ${formatDate(app.date)}</span>
-          <span><i class="fa-regular fa-clock"></i> ${app.time} hs</span>
-        </div>
-      </div>
-      <button class="btn-delete" onclick="deleteAppointment('${app.id}')" title="Eliminar Turno">
-        <i class="fa-solid fa-trash-can"></i> Eliminar
-      </button>
-    </div>
-  `).join('');
-}
-
-// Función para Eliminar Turno
-function deleteAppointment(id) {
-  if (confirm('¿Está seguro de que desea cancelar y eliminar este turno?')) {
-    appointments = appointments.filter(app => app.id !== id);
-    saveToLocalStorage();
-    renderAppointments();
-    showAlert('El turno ha sido eliminado.', 'success');
-  }
-}
-
-// Guardar en LocalStorage
-function saveToLocalStorage() {
-  localStorage.setItem('hospital_appointments', JSON.stringify(appointments));
-}
-
-// Mostrar Alertas Temporales
-function showAlert(message, type) {
-  alertBox.textContent = message;
-  alertBox.className = `alert ${type}`;
-  alertBox.classList.remove('hidden');
-
-  setTimeout(() => {
-    alertBox.classList.add('hidden');
-  }, 4000);
-}
-
-// Formatear fecha para lectura humana (YYYY-MM-DD a DD/MM/YYYY)
-function formatDate(dateStr) {
-  const [year, month, day] = dateStr.split('-');
-  return `${day}/${month}/${year}`;
-}
-
-// Evitar inyecciones HTML en nombres
-function escapeHtml(str) {
-  return str.replace(/[&<>"']/g, match => {
-    const chars = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-    return chars[match];
+    document.getElementById('paciente').value = '';
+    document.getElementById('dni').value = '';
+    document.getElementById('especialidad').selectedIndex = 0;
   });
-}
+
+  function renderizarTurnos(filtro = '') {
+    listaTurnos.innerHTML = '';
+
+    const turnosOrdenados = [...turnos].sort((a, b) => {
+      const fechaHoraA = `${a.fecha} ${a.horario}`;
+      const fechaHoraB = `${b.fecha} ${b.horario}`;
+      return fechaHoraA.localeCompare(fechaHoraB);
+    });
+
+    const turnosFiltrados = turnosOrdenados.filter((t) =>
+      t.paciente.toLowerCase().includes(filtro.toLowerCase()) ||
+      t.dni.includes(filtro) ||
+      t.especialidad.toLowerCase().includes(filtro.toLowerCase())
+    );
+
+    contadorTurnos.textContent = `${turnosFiltrados.length} ${turnosFiltrados.length === 1 ? 'turno' : 'turnos'}`;
+
+    if (turnosFiltrados.length === 0) {
+      listaTurnos.innerHTML = '<p class="vacio-msg">No hay turnos agendados aún.</p>';
+      return;
+    }
+
+    turnosFiltrados.forEach((turno) => {
+      const item = document.createElement('div');
+      item.className = 'turno-item';
+      item.innerHTML = `
+        <div class="turno-datos">
+          <h4>${turno.paciente}</h4>
+          <p><strong>DNI:</strong> ${turno.dni} | <strong>Especialidad:</strong> ${turno.especialidad}</p>
+          <span class="turno-fecha-hora">${turno.fecha} — ${turno.horario} hs</span>
+        </div>
+        <button class="btn-eliminar" data-id="${turno.id}">Eliminar</button>
+      `;
+      listaTurnos.appendChild(item);
+    });
+  }
+
+  listaTurnos.addEventListener('click', (e) => {
+    if (e.target.classList.contains('btn-eliminar')) {
+      const idEliminar = Number(e.target.getAttribute('data-id'));
+      turnos = turnos.filter((t) => t.id !== idEliminar);
+      guardarYRenderizar();
+    }
+  });
+
+  function guardarYRenderizar() {
+    localStorage.setItem('turnosHospital', JSON.stringify(turnos));
+    renderizarTurnos(buscarTurnoInput.value);
+  }
+
+  btnActualizarHorarios.addEventListener('click', () => {
+    generarIntervalosHorarios();
+    mostrarAlerta('Horarios del consultor actualizados.', 'exito');
+  });
+
+  buscarTurnoInput.addEventListener('input', (e) => {
+    renderizarTurnos(e.target.value);
+  });
+
+  establecerFechaMinima();
+  generarIntervalosHorarios();
+  renderizarTurnos();
+});
